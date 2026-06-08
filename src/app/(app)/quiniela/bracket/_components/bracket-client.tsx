@@ -17,6 +17,11 @@ interface BracketClientProps {
   groupWinners: Record<string, number>
   groupRunnerUps: Record<string, number>
   officialBracketMap: Record<number, number>
+  // Server-resolved slot teams from resolve_user_bracket() RPC.
+  // Used exclusively to fill best_third slots (which require the
+  // fifa_third_place_matrix lookup the server already performed).
+  // match_winner / match_loser slots stay dynamically computed here.
+  serverSlots: Record<number, { a: number | null; b: number | null }>
   phase: TournamentPhase
 }
 
@@ -32,15 +37,21 @@ function resolveSlots(
   predictions: Record<number, number>,
   groupWinners: Record<string, number>,
   groupRunnerUps: Record<string, number>,
+  serverSlots: Record<number, { a: number | null; b: number | null }>,
 ): ResolvedSlots {
   const resolved: ResolvedSlots = {}
   const winnerOf: Record<number, number | null> = {}
 
   for (const match of template) {
-    function resolveRef(slotType: string, slotRef: string): number | null {
+    // isSlotA distinguishes which pre-resolved team to pick for best_third
+    function resolveRef(slotType: string, slotRef: string, isSlotA: boolean): number | null {
       if (slotType === 'group_winner') return groupWinners[slotRef] ?? null
       if (slotType === 'group_runner_up') return groupRunnerUps[slotRef] ?? null
-      if (slotType === 'best_third') return null // requires matrix — shown as TBD
+      if (slotType === 'best_third') {
+        // Server already ran the matrix lookup; trust its result.
+        const s = serverSlots[match.match_number]
+        return isSlotA ? (s?.a ?? null) : (s?.b ?? null)
+      }
       if (slotType === 'match_winner') {
         const mn = parseInt(slotRef, 10)
         return winnerOf[mn] ?? null
@@ -49,16 +60,14 @@ function resolveSlots(
         const mn = parseInt(slotRef, 10)
         const winner = winnerOf[mn]
         const slots = resolved[mn]
-        if (winner && slots) {
-          return winner === slots.a ? slots.b : slots.a
-        }
+        if (winner && slots) return winner === slots.a ? slots.b : slots.a
         return null
       }
       return null
     }
 
-    const a = resolveRef(match.slot_a_type, match.slot_a_ref)
-    const b = resolveRef(match.slot_b_type, match.slot_b_ref)
+    const a = resolveRef(match.slot_a_type, match.slot_a_ref, true)
+    const b = resolveRef(match.slot_b_type, match.slot_b_ref, false)
     resolved[match.match_number] = { a, b }
     winnerOf[match.match_number] = predictions[match.match_number] ?? null
   }
@@ -69,13 +78,13 @@ function resolveSlots(
 export function BracketClient({
   userId, template, teamsById,
   initialPredictions, groupWinners, groupRunnerUps,
-  officialBracketMap, phase,
+  officialBracketMap, serverSlots, phase,
 }: BracketClientProps) {
   const locked = phase !== 'predictions_open'
   const [predictions, setPredictions] = useState<Record<number, number>>(initialPredictions)
   const [saving, setSaving] = useState<Record<number, boolean>>({})
 
-  const resolved = resolveSlots(template, predictions, groupWinners, groupRunnerUps)
+  const resolved = resolveSlots(template, predictions, groupWinners, groupRunnerUps, serverSlots)
 
   const invalidateDownstream = useCallback((matchNumber: number, current: Record<number, number>) => {
     const downstream = template.filter((t) =>
@@ -113,7 +122,6 @@ export function BracketClient({
   }
 
   async function handleSelectWinner(matchNumber: number, winnerId: number) {
-    // Optimistic update + cascade invalidation
     setPredictions((prev) => {
       const next = { ...prev, [matchNumber]: winnerId }
       return invalidateDownstream(matchNumber, next)
@@ -130,7 +138,6 @@ export function BracketClient({
     setSaving((prev) => ({ ...prev, [matchNumber]: false }))
     if (error) {
       toast.error(`Error al guardar M${matchNumber}: ${error.message}`)
-      // Roll back
       setPredictions((prev) => {
         const next = { ...prev }
         delete next[matchNumber]

@@ -15,6 +15,7 @@ interface BracketAdminClientProps {
   initialResults: Record<number, number>
   groupWinners: Record<string, number>
   groupRunnerUps: Record<string, number>
+  serverSlots: Record<number, { a: number | null; b: number | null }>
 }
 
 type ResolvedSlots = Record<number, { a: number | null; b: number | null }>
@@ -35,15 +36,19 @@ function resolveSlots(
   results: Record<number, number>,
   groupWinners: Record<string, number>,
   groupRunnerUps: Record<string, number>,
+  serverSlots: Record<number, { a: number | null; b: number | null }>,
 ): ResolvedSlots {
   const resolved: ResolvedSlots = {}
   const winnerOf: Record<number, number | null> = {}
 
   for (const match of template) {
-    function resolveRef(slotType: string, slotRef: string): number | null {
+    function resolveRef(slotType: string, slotRef: string, isSlotA: boolean): number | null {
       if (slotType === 'group_winner') return groupWinners[slotRef] ?? null
       if (slotType === 'group_runner_up') return groupRunnerUps[slotRef] ?? null
-      if (slotType === 'best_third') return null
+      if (slotType === 'best_third') {
+        const s = serverSlots[match.match_number]
+        return isSlotA ? (s?.a ?? null) : (s?.b ?? null)
+      }
       if (slotType === 'match_winner') {
         const mn = parseInt(slotRef, 10)
         return winnerOf[mn] ?? null
@@ -58,8 +63,8 @@ function resolveSlots(
       return null
     }
 
-    const a = resolveRef(match.slot_a_type, match.slot_a_ref)
-    const b = resolveRef(match.slot_b_type, match.slot_b_ref)
+    const a = resolveRef(match.slot_a_type, match.slot_a_ref, true)
+    const b = resolveRef(match.slot_b_type, match.slot_b_ref, false)
     resolved[match.match_number] = { a, b }
     winnerOf[match.match_number] = results[match.match_number] ?? null
   }
@@ -190,12 +195,13 @@ export function BracketAdminClient({
   initialResults,
   groupWinners,
   groupRunnerUps,
+  serverSlots,
 }: BracketAdminClientProps) {
   const [results, setResults] = useState<Record<number, number>>(initialResults)
   const [saving, setSaving] = useState<Record<number, boolean>>({})
   const [stats, setStats] = useState<Record<number, MatchStats>>({})
 
-  const resolved = resolveSlots(template, results, groupWinners, groupRunnerUps)
+  const resolved = resolveSlots(template, results, groupWinners, groupRunnerUps, serverSlots)
 
   const templateByRound = template.reduce<Record<string, BracketTemplate[]>>((acc, t) => {
     acc[t.round] = acc[t.round] ?? []
