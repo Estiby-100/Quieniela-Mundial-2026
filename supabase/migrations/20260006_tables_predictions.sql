@@ -65,15 +65,13 @@ comment on table bracket_predictions is
 -- scorer_predictions
 -- ─────────────────────────────────────────────
 create table scorer_predictions (
-  user_id           uuid        primary key references profiles on delete cascade,
+  user_id           uuid         primary key references profiles on delete cascade,
   player_name       varchar(100) not null,
-  player_normalized text         generated always as (
-                      lower(regexp_replace(unaccent(trim(player_name)), '\s+', ' ', 'g'))
-                    ) stored,
-  team_id           smallint    not null references teams,
-  updated_at        timestamptz not null default now()
+  player_normalized text,
+  team_id           smallint     not null references teams,
+  updated_at        timestamptz  not null default now()
 );
 
 comment on table  scorer_predictions is 'User''s predicted top scorer. One entry per user. Locked when phase leaves predictions_open.';
 comment on column scorer_predictions.player_normalized is
-  'Auto-generated: lowercase + unaccented + trimmed name. Used for comparison with official_top_scorer.player_normalized.';
+  'Lowercase + unaccented + trimmed name. Used for comparison with official_top_scorer.player_normalized.';

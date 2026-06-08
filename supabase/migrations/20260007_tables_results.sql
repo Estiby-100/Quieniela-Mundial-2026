@@ -56,9 +56,7 @@ comment on table official_bracket_results is 'Admin-recorded winner for each of 
 create table official_top_scorer (
   id                smallint     primary key default 1,
   player_name       varchar(100) not null,
-  player_normalized text         generated always as (
-                      lower(regexp_replace(unaccent(trim(player_name)), '\s+', ' ', 'g'))
-                    ) stored,
+  player_normalized text,
   team_id           smallint     not null references teams,
   recorded_at       timestamptz  not null default now(),
   recorded_by       uuid         not null references profiles,
