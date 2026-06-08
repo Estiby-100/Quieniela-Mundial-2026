@@ -157,10 +157,11 @@ export function BracketClient({
   }, {})
 
   const rounds = ROUND_ORDER.filter((r) => templateByRound[r]?.length > 0)
+  const [activeTab, setActiveTab] = useState<string>(rounds[0] ?? 'r32')
 
   return (
     <div className="p-4 space-y-4">
-      <Tabs defaultValue={rounds[0] ?? 'r32'}>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4 flex-wrap h-auto gap-1">
           {rounds.map((round) => {
             const matches = templateByRound[round] ?? []
@@ -179,34 +180,48 @@ export function BracketClient({
           })}
         </TabsList>
 
-        {rounds.map((round) => (
-          <TabsContent key={round} value={round}>
-            <ScrollArea>
-              <div className={cn(
-                'grid gap-3',
-                round === 'r32' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 max-w-lg',
-              )}>
-                {(templateByRound[round] ?? []).map((match) => {
-                  const slots = resolved[match.match_number]
-                  return (
-                    <MatchCard
-                      key={match.match_number}
-                      matchNumber={match.match_number}
-                      round={match.round}
-                      teamA={slots?.a ? teamsById[slots.a] ?? null : null}
-                      teamB={slots?.b ? teamsById[slots.b] ?? null : null}
-                      selectedWinner={predictions[match.match_number] ?? null}
-                      officialWinner={officialBracketMap[match.match_number] ?? null}
-                      onSelectWinner={(id) => handleSelectWinner(match.match_number, id)}
-                      locked={locked}
-                      saving={saving[match.match_number]}
-                    />
-                  )
-                })}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-        ))}
+        {rounds.map((round, roundIndex) => {
+          const nextRound = rounds[roundIndex + 1]
+          return (
+            <TabsContent key={round} value={round}>
+              <ScrollArea>
+                <div className={cn(
+                  'grid gap-3',
+                  round === 'r32' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 max-w-lg',
+                )}>
+                  {(templateByRound[round] ?? []).map((match) => {
+                    const slots = resolved[match.match_number]
+                    return (
+                      <MatchCard
+                        key={match.match_number}
+                        matchNumber={match.match_number}
+                        round={match.round}
+                        teamA={slots?.a ? teamsById[slots.a] ?? null : null}
+                        teamB={slots?.b ? teamsById[slots.b] ?? null : null}
+                        selectedWinner={predictions[match.match_number] ?? null}
+                        officialWinner={officialBracketMap[match.match_number] ?? null}
+                        onSelectWinner={(id) => handleSelectWinner(match.match_number, id)}
+                        locked={locked}
+                        saving={saving[match.match_number]}
+                      />
+                    )
+                  })}
+                </div>
+              </ScrollArea>
+
+              {!locked && nextRound && (
+                <Button
+                  size="lg"
+                  className="w-full mt-4"
+                  onClick={() => setActiveTab(nextRound)}
+                >
+                  Siguiente: {ROUND_LABELS[nextRound]}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              )}
+            </TabsContent>
+          )
+        })}
       </Tabs>
 
       {!locked && (
