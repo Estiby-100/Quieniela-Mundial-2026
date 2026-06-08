@@ -20,6 +20,9 @@ import {
   BarChart3,
   RefreshCw,
   UserCog,
+  BookOpen,
+  Users2,
+  Target,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { UserContext } from '@/lib/types/app.types'
@@ -52,12 +55,16 @@ const mainNavItems: NavItem[] = [
   { href: '/app/ranking', label: 'Ranking', icon: <Trophy className="h-4 w-4" /> },
   { href: '/app/predicciones', label: 'Ver predicciones', icon: <Users className="h-4 w-4" /> },
   { href: '/app/actividad', label: 'Actividad', icon: <Newspaper className="h-4 w-4" /> },
+  { href: '/app/reglas', label: 'Reglas de puntuación', icon: <BookOpen className="h-4 w-4" /> },
 ]
 
 const adminNavItems: NavItem[] = [
   { href: '/admin/dashboard', label: 'Panel admin', icon: <Shield className="h-4 w-4" /> },
   { href: '/admin/fase', label: 'Control de fase', icon: <Settings className="h-4 w-4" /> },
-  { href: '/admin/resultados/grupos', label: 'Resultados', icon: <BarChart3 className="h-4 w-4" /> },
+  { href: '/admin/resultados/grupos', label: 'Res. Grupos', icon: <BarChart3 className="h-4 w-4" /> },
+  { href: '/admin/resultados/mejores-terceros', label: 'Res. Terceros', icon: <Users2 className="h-4 w-4" /> },
+  { href: '/admin/resultados/bracket', label: 'Res. Bracket', icon: <Target className="h-4 w-4" /> },
+  { href: '/admin/resultados/goleador', label: 'Res. Goleador', icon: <Trophy className="h-4 w-4" /> },
   { href: '/admin/recalcular', label: 'Recalcular', icon: <RefreshCw className="h-4 w-4" /> },
   { href: '/admin/usuarios', label: 'Usuarios', icon: <UserCog className="h-4 w-4" /> },
 ]
