@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { Header } from './header'
 import { Sidebar } from './sidebar'
 import { BottomNav } from './bottom-nav'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 import type { UserContext } from '@/lib/types/app.types'
 
 interface AppShellProps {
@@ -14,6 +15,7 @@ interface AppShellProps {
 
 export function AppShell({ userContext, children }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
     <div className="flex h-svh bg-background">
@@ -31,12 +33,23 @@ export function AppShell({ userContext, children }: AppShellProps) {
         />
       </aside>
 
+      {/* Mobile drawer */}
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetContent side="left" className="w-64 p-0 md:hidden">
+          <Sidebar
+            userContext={userContext}
+            collapsed={false}
+            onToggle={() => setMobileMenuOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
+
       {/* Main area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Mobile header */}
         <Header
           userContext={userContext}
-          onMenuClick={() => {}}
+          onMenuClick={() => setMobileMenuOpen(true)}
           className="md:hidden"
         />
 

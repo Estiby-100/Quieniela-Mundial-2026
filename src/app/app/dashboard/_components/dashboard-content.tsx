@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { PhaseBanner } from './phase-banner'
 import { ProgressCards } from './progress-cards'
@@ -49,6 +49,7 @@ export function DashboardContent({
   profiles,
   userPosition,
 }: DashboardContentProps) {
+  const router = useRouter()
   const overallPct = getOverallPct(groupsCompleted, bracketCompleted, goleadorDone)
   const predictionsOpen = phase === 'predictions_open'
   const showCTA = predictionsOpen && overallPct < 100
@@ -75,11 +76,13 @@ export function DashboardContent({
 
       {/* CTA button */}
       {showCTA && (
-        <Button className="w-full sm:w-auto" size="lg" asChild>
-          <Link href="/app/quiniela/grupos">
-            {overallPct === 0 ? 'Comenzar mi quiniela' : 'Completar mi quiniela'}
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
+        <Button
+          className="w-full sm:w-auto"
+          size="lg"
+          onClick={() => router.push('/app/quiniela/grupos')}
+        >
+          {overallPct === 0 ? 'Comenzar mi quiniela' : 'Completar mi quiniela'}
+          <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       )}
 

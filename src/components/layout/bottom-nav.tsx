@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, ListOrdered, Trophy, Users, Settings } from 'lucide-react'
+import { LayoutDashboard, ListOrdered, Trophy, Users, Settings, BookOpen } from 'lucide-react'
 import type { UserContext } from '@/lib/types/app.types'
 
 interface BottomNavProps {
@@ -23,6 +23,7 @@ const navItems: NavItem[] = [
   { href: '/app/quiniela/grupos', label: 'Quiniela', icon: <ListOrdered className="h-5 w-5" /> },
   { href: '/app/ranking', label: 'Ranking', icon: <Trophy className="h-5 w-5" /> },
   { href: '/app/predicciones', label: 'Ver otros', icon: <Users className="h-5 w-5" /> },
+  { href: '/app/reglas', label: 'Reglas', icon: <BookOpen className="h-5 w-5" /> },
   { href: '/admin/dashboard', label: 'Admin', icon: <Settings className="h-5 w-5" />, adminOnly: true },
 ]
 
