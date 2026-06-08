@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { X, Info, Loader2, Check } from 'lucide-react'
+import { X, Info, Loader2, Check, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ResultIcon } from '@/components/atoms/result-icon'
@@ -30,6 +31,7 @@ export function TercerosClient({
   phase,
   officialThirdIds,
 }: TercerosClientProps) {
+  const router = useRouter()
   const locked = phase !== 'predictions_open'
   const [selected, setSelected] = useState<number[]>(initialSelected)
   const [saving, setSaving] = useState(false)
@@ -185,22 +187,31 @@ export function TercerosClient({
       </Card>
 
       {!locked && (
-        <div className="flex items-center gap-3 pb-4">
+        <div className="flex items-center gap-3">
           <Button
             onClick={handleSave}
             disabled={saving || selected.length === 0}
-            className="gap-2"
+            variant={saved ? 'outline' : 'default'}
+            className={saved ? 'gap-2 text-emerald-400 border-emerald-400' : 'gap-2'}
           >
-            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-            {saving ? 'Guardando...' : 'Guardar selección'}
+            {saving
+              ? <><Loader2 className="h-4 w-4 animate-spin" /> Guardando...</>
+              : saved
+              ? <><Check className="h-4 w-4" /> Guardado</>
+              : 'Guardar selección'}
           </Button>
-          {saved && (
-            <span className="flex items-center gap-1 text-sm text-emerald-400">
-              <Check className="h-4 w-4" />
-              Guardado
-            </span>
-          )}
         </div>
+      )}
+
+      {!locked && (
+        <Button
+          size="lg"
+          className="w-full"
+          onClick={() => router.push('/app/quiniela/bracket')}
+        >
+          Siguiente: Bracket
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
       )}
     </div>
   )

@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { ArrowRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { MatchCard } from './match-card'
 import { createMutationClient } from '@/lib/supabase/client'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -80,6 +83,7 @@ export function BracketClient({
   initialPredictions, groupWinners, groupRunnerUps,
   officialBracketMap, serverSlots, phase,
 }: BracketClientProps) {
+  const router = useRouter()
   const locked = phase !== 'predictions_open'
   const [predictions, setPredictions] = useState<Record<number, number>>(initialPredictions)
   const [saving, setSaving] = useState<Record<number, boolean>>({})
@@ -155,7 +159,7 @@ export function BracketClient({
   const rounds = ROUND_ORDER.filter((r) => templateByRound[r]?.length > 0)
 
   return (
-    <div className="p-4">
+    <div className="p-4 space-y-4">
       <Tabs defaultValue={rounds[0] ?? 'r32'}>
         <TabsList className="mb-4 flex-wrap h-auto gap-1">
           {rounds.map((round) => {
@@ -204,6 +208,17 @@ export function BracketClient({
           </TabsContent>
         ))}
       </Tabs>
+
+      {!locked && (
+        <Button
+          size="lg"
+          className="w-full"
+          onClick={() => router.push('/app/quiniela/goleador')}
+        >
+          Siguiente: Goleador
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      )}
     </div>
   )
 }

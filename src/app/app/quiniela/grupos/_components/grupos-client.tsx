@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { ArrowRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { GroupCard } from './group-card'
 import { createMutationClient } from '@/lib/supabase/client'
 import type { SaveStatus } from './save-indicator'
@@ -24,6 +27,7 @@ export function GruposClient({
   officialsByGroup,
   phase,
 }: GruposClientProps) {
+  const router = useRouter()
   const locked = phase !== 'predictions_open'
 
   // order: group letter → array of team IDs (positions 1-4)
@@ -97,7 +101,7 @@ export function GruposClient({
   }, [orders, userId])
 
   return (
-    <div className="p-4">
+    <div className="p-4 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {GROUP_LETTERS.map((letter) => (
           <GroupCard
@@ -113,6 +117,17 @@ export function GruposClient({
           />
         ))}
       </div>
+
+      {!locked && (
+        <Button
+          size="lg"
+          className="w-full"
+          onClick={() => router.push('/app/quiniela/mejores-terceros')}
+        >
+          Siguiente: Mejores Terceros
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      )}
     </div>
   )
 }

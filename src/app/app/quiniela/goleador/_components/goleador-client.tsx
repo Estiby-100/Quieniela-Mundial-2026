@@ -135,16 +135,19 @@ export function GoleadorClient({ userId, teams, initial, official, phase }: Gole
           </div>
 
           {!locked && (
-            <div className="flex items-center gap-3 pt-1">
-              <Button onClick={handleSave} disabled={saving} className="gap-2">
-                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                {saving ? 'Guardando...' : 'Guardar'}
+            <div className="pt-1">
+              <Button
+                onClick={handleSave}
+                disabled={saving}
+                variant={saved ? 'outline' : 'default'}
+                className={saved ? 'gap-2 w-full text-emerald-400 border-emerald-400' : 'gap-2 w-full'}
+              >
+                {saving
+                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Guardando...</>
+                  : saved
+                  ? <><Check className="h-4 w-4" /> Guardado</>
+                  : 'Guardar'}
               </Button>
-              {saved && (
-                <span className="flex items-center gap-1 text-sm text-emerald-400">
-                  <Check className="h-4 w-4" /> Guardado
-                </span>
-              )}
             </div>
           )}
         </CardContent>
