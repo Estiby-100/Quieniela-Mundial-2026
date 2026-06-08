@@ -3,9 +3,9 @@
 import { useState, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { BarChart3 } from 'lucide-react'
-import { GroupCard } from '@/app/(app)/quiniela/grupos/_components/group-card'
+import { GroupCard } from '@/app/app/quiniela/grupos/_components/group-card'
 import { createMutationClient } from '@/lib/supabase/client'
-import type { SaveStatus } from '@/app/(app)/quiniela/grupos/_components/save-indicator'
+import type { SaveStatus } from '@/app/app/quiniela/grupos/_components/save-indicator'
 import type { Team, OfficialGroupResult } from '@/lib/types/database.types'
 
 interface GruposAdminClientProps {

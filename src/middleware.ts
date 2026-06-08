@@ -5,14 +5,14 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const { supabaseResponse, user } = await updateSession(request)
 
-  const isAuthRoute = pathname.startsWith('/auth')
+  const isAuthRoute = pathname === '/login' || pathname.startsWith('/callback')
   const isAppRoute = pathname.startsWith('/app') || pathname.startsWith('/admin')
   const isRootRoute = pathname === '/'
 
   // Unauthenticated user trying to access protected routes
   if (!user && isAppRoute) {
     const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
+    url.pathname = '/login'
     url.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(url)
   }
@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
   // Root redirect
   if (isRootRoute) {
     const url = request.nextUrl.clone()
-    url.pathname = user ? '/app/dashboard' : '/auth/login'
+    url.pathname = user ? '/app/dashboard' : '/login'
     return NextResponse.redirect(url)
   }
 

@@ -97,7 +97,7 @@ export function Sidebar({ userContext, collapsed, onToggle }: SidebarProps) {
   async function handleSignOut() {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/auth/login')
+    router.push('/login')
     router.refresh()
   }
 

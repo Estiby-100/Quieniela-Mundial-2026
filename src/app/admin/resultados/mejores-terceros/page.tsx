@@ -6,7 +6,7 @@ import type { Team, OfficialGroupResult } from '@/lib/types/database.types'
 export default async function AdminResultadosMejoresTercerosPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const [teamsResult, officialsGroupResult, officialThirdsResult] = await Promise.all([
     supabase.from('teams').select('*').order('group_letter').order('group_position'),

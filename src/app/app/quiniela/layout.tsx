@@ -8,7 +8,7 @@ import type { TournamentPhase } from '@/lib/types/database.types'
 export default async function QuinielaLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const [configResult, grupCount, tercCount, brackCount, scorerResult] = await Promise.all([
     supabase.from('app_config').select('tournament_phase').eq('id', 1).single(),

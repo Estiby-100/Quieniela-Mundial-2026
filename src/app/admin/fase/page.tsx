@@ -6,7 +6,7 @@ import type { AppConfig, ScoringRule, TournamentPhase } from '@/lib/types/databa
 export default async function FasePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const [configResult, rulesResult] = await Promise.all([
     supabase.from('app_config').select('*').eq('id', 1).single(),

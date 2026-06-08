@@ -10,7 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const [profileResult, standingResult, allStandingsResult] = await Promise.all([
     supabase.from('profiles').select('full_name, is_admin').eq('id', user.id).single(),

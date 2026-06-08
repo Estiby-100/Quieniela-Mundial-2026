@@ -6,7 +6,7 @@ import type { Profile, Standing } from '@/lib/types/database.types'
 export default async function AdminUsuariosPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const [profilesResult, standingsResult, groupPredsResult, bracketPredsResult, scorerPredsResult] =
     await Promise.all([

@@ -6,7 +6,7 @@ import type { Team, GroupPrediction, OfficialGroupResult, TournamentPhase } from
 export default async function GruposPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const [teamsResult, predsResult, configResult, officialsResult] = await Promise.all([
     supabase.from('teams').select('*').order('group_letter').order('group_position'),

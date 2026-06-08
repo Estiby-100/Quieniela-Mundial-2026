@@ -6,7 +6,7 @@ import type { Team, GroupPrediction, TournamentPhase } from '@/lib/types/databas
 export default async function MejoresTercerosPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const [teamsResult, groupPredsResult, thirdPredsResult, configResult, officialsResult] =
     await Promise.all([

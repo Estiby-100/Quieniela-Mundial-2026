@@ -27,7 +27,7 @@ const TABLE_LABELS: Record<string, string> = {
 export default async function ActividadPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const profileResult = await supabase
     .from('profiles')

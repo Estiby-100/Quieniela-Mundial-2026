@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { GruposClient } from '@/app/(app)/quiniela/grupos/_components/grupos-client'
+import { GruposClient } from '@/app/app/quiniela/grupos/_components/grupos-client'
 import type {
   Team, Profile, Standing, GroupPrediction, OfficialGroupResult,
   AppConfig, TournamentPhase,
@@ -22,7 +22,7 @@ export default async function UserPrediccionesPage({ params }: PageProps) {
   const { userId: targetUserId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const [configResult, profileResult, standingResult, teamsResult, groupPredsResult, officialsResult, allStandingsResult] =
     await Promise.all([

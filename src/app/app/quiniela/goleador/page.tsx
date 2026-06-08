@@ -6,7 +6,7 @@ import type { Team, ScorerPrediction, OfficialTopScorer, TournamentPhase } from 
 export default async function GoleadorPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const [teamsResult, predResult, officialResult, configResult] = await Promise.all([
     supabase.from('teams').select('*').order('name'),

@@ -19,7 +19,7 @@ function getSourceGroup(matrixRow: FifaThirdPlaceMatrix, receivingGroupLetter: s
 export default async function AdminResultadosBracketPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const [
     templateResult, teamsResult, officialGroupResult,

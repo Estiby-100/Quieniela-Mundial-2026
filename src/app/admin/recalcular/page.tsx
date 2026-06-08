@@ -6,7 +6,7 @@ import type { Standing } from '@/lib/types/database.types'
 export default async function AdminRecalcularPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const [standingsResult, historyResult] = await Promise.all([
     supabase.from('standings').select('user_id, total_points, last_recalculated_at')

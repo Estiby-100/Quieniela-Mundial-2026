@@ -8,7 +8,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const [profileResult, standingResult, allStandingsResult] = await Promise.all([
     supabase.from('profiles').select('full_name, is_admin').eq('id', user.id).single(),

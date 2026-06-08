@@ -6,7 +6,7 @@ import type { AppConfig, AuditLog, TournamentPhase } from '@/lib/types/database.
 export default async function AdminDashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const [
     configResult,

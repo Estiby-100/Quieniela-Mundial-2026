@@ -6,7 +6,7 @@ import type { Team, OfficialTopScorer } from '@/lib/types/database.types'
 export default async function AdminResultadosGoleadorPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const [teamsResult, officialResult] = await Promise.all([
     supabase.from('teams').select('*').order('name'),

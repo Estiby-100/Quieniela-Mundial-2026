@@ -14,7 +14,7 @@ function getInitials(name: string | null): string {
 export default async function PrediccionesPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const configResult = await supabase
     .from('app_config')
