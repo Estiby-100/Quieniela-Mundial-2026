@@ -11,12 +11,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!user) redirect('/login')
 
   const [profileResult, standingResult, allStandingsResult] = await Promise.all([
-    supabase.from('profiles').select('full_name, is_admin').eq('id', user.id).single(),
+    supabase.from('profiles').select('full_name, is_admin').eq('id', user.id).maybeSingle(),
     supabase.from('standings').select('total_points').eq('user_id', user.id).maybeSingle(),
     supabase.from('standings').select('user_id, total_points').order('total_points', { ascending: false }),
   ])
 
   const profile = profileResult.data as Pick<Profile, 'full_name' | 'is_admin'> | null
+  console.log('ADMIN LAYOUT DEBUG - user.id:', user.id)
+  console.log('ADMIN LAYOUT DEBUG - profile:', profile)
+  console.log('ADMIN LAYOUT DEBUG - error:', profileResult.error)
+
   if (!profile?.is_admin) redirect('/app/dashboard')
 
   const standing = standingResult.data as Pick<Standing, 'total_points'> | null
