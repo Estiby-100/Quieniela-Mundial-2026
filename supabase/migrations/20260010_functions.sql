@@ -115,10 +115,6 @@ $$;
 
 -- ─────────────────────────────────────────────
 -- resolve_user_bracket
--- Pure deterministic function — never persisted.
--- Returns (match_number, slot_a_team_id, slot_b_team_id) for all 32 matches
--- based on a user's group_predictions + best_third_predictions.
--- Falls back to official results if predictions don't fully cover a slot.
 -- ─────────────────────────────────────────────
 create or replace function resolve_user_bracket(p_user_id uuid)
 returns table (
@@ -137,16 +133,14 @@ declare
   v_tmpl        bracket_template%rowtype;
   v_slot_a      smallint;
   v_slot_b      smallint;
-  v_resolved    jsonb := '{}'; -- match_number::text -> winner team_id
+  v_resolved    jsonb := '{}';
 begin
-  -- ── Build groups_key from user's best_third_predictions ──────────────────
   select string_agg(t.group_letter, '' order by t.group_letter)
   into   v_groups_key
   from   best_third_predictions btp
   join   teams t on t.id = btp.team_id
   where  btp.user_id = p_user_id;
 
-  -- If user hasn't chosen 8 thirds yet, use official if available
   if length(coalesce(v_groups_key,'')) <> 8 then
     select string_agg(t.group_letter, '' order by t.group_letter)
     into   v_groups_key
@@ -154,27 +148,19 @@ begin
     join   teams t on t.id = obt.team_id;
   end if;
 
-  -- Lookup matrix row (will be null if groups_key not yet determinable)
   if length(coalesce(v_groups_key,'')) = 8 then
     select * into v_matrix_row
     from   fifa_third_place_matrix
     where  groups_key = v_groups_key;
   end if;
 
-  -- ── Helper: resolve a single slot to a team_id ───────────────────────────
-  -- Inline via a nested function emulation using a DO block is not possible,
-  -- so we resolve each template row inline in the loop below.
-
-  -- ── Iterate bracket_template in match order ───────────────────────────────
   for v_tmpl in
     select * from bracket_template order by match_number
   loop
-    -- Resolve slot A
     v_slot_a := resolve_bracket_slot(
       v_tmpl.slot_a_type, v_tmpl.slot_a_ref,
       p_user_id, v_matrix_row, v_resolved
     );
-    -- Resolve slot B
     v_slot_b := resolve_bracket_slot(
       v_tmpl.slot_b_type, v_tmpl.slot_b_ref,
       p_user_id, v_matrix_row, v_resolved
@@ -185,7 +171,6 @@ begin
     slot_b_team_id := v_slot_b;
     return next;
 
-    -- Track predicted/official winner for downstream match resolution
     declare
       v_winner smallint;
     begin
@@ -195,7 +180,6 @@ begin
         and  bp.match_number = v_tmpl.match_number;
 
       if v_winner is null then
-        -- Fall back to official result
         select obr.winner_id into v_winner
         from   official_bracket_results obr
         where  obr.match_number = v_tmpl.match_number;
@@ -210,7 +194,7 @@ end;
 $$;
 
 -- ─────────────────────────────────────────────
--- Slot resolver helper (called by resolve_user_bracket)
+-- Slot resolver helper
 -- ─────────────────────────────────────────────
 create or replace function resolve_bracket_slot(
   p_slot_type    slot_type,
@@ -234,11 +218,9 @@ begin
 
     when 'group_winner' then
       v_group := p_slot_ref::char(1);
-      -- Try user prediction first
       select position_1 into v_team_id
       from   group_predictions
       where  user_id = p_user_id and group_letter = v_group;
-      -- Fall back to official
       if v_team_id is null then
         select position_1 into v_team_id
         from   official_group_results where group_letter = v_group;
@@ -255,9 +237,7 @@ begin
       end if;
 
     when 'best_third' then
-      -- p_slot_ref carries the group whose winner receives this third-place team.
-      -- Look up which group's third-place faces that winner using the matrix.
-      v_group := p_slot_ref::char(1); -- the receiving group winner's letter
+      v_group := p_slot_ref::char(1);
       v_third_grp := case v_group
         when 'A' then p_matrix_row.winner_a_faces
         when 'B' then p_matrix_row.winner_b_faces
@@ -283,12 +263,6 @@ begin
       v_team_id := (p_resolved_map ->> p_slot_ref)::smallint;
 
     when 'match_loser' then
-      -- For 3rd place match: we need to know who lost SF
-      -- The resolved map stores winners; loser = the other slot participant
-      -- This requires tracking both slots per match, which the calling function handles
-      -- via the slot_a/slot_b from the prior match resolution.
-      -- For simplicity at this layer, return null — the 3rd place match
-      -- participants are resolved at the UI layer from SF results.
       v_team_id := null;
 
   end case;
@@ -299,14 +273,12 @@ $$;
 
 -- ─────────────────────────────────────────────
 -- recalculate_standings
--- Atomically recalculates scores for all users and records ranking history.
--- p_scope: 'groups' | 'thirds' | 'bracket' | 'scorer' | 'full'
 -- ─────────────────────────────────────────────
 create or replace function recalculate_standings(
   p_scope            text default 'full',
   p_recalculation_id uuid default gen_random_uuid()
 )
-returns uuid  -- returns recalculation_id for caller reference
+returns uuid
 language plpgsql
 security definer
 set search_path = public
@@ -318,7 +290,6 @@ declare
   v_points_scorer    smallint;
   v_uid              uuid;
 
-  -- scoring rule cache
   r_group_exact      smallint;
   r_group_wrong_pos  smallint;
   r_third_correct    smallint;
@@ -330,7 +301,6 @@ declare
   r_champion         smallint;
   r_scorer           smallint;
 begin
-  -- Load scoring rules once
   select points into r_group_exact     from scoring_rules where rule_key = 'group_exact_position';
   select points into r_group_wrong_pos from scoring_rules where rule_key = 'group_classified_wrong_position';
   select points into r_third_correct   from scoring_rules where rule_key = 'best_third_correct';
@@ -342,22 +312,17 @@ begin
   select points into r_champion        from scoring_rules where rule_key = 'champion_correct';
   select points into r_scorer          from scoring_rules where rule_key = 'top_scorer_correct';
 
-  -- Lock standings rows to prevent concurrent recalculations
   perform id from standings for update;
 
-  -- ── Recalculate per user ────────────────────────────────────────────────
   for v_uid in select user_id from standings loop
 
-    -- ── Points: groups ──────────────────────────────────────────────────
     if p_scope in ('full', 'groups') then
       select coalesce(sum(
         case
-          -- Exact position match
           when (gp.position_1 = ogr.position_1) then r_group_exact
           when (gp.position_2 = ogr.position_2) then r_group_exact
           when (gp.position_3 = ogr.position_3) then r_group_exact
           when (gp.position_4 = ogr.position_4) then r_group_exact
-          -- Classified but wrong position (team appears in top 2 of official, predicted top 2)
           when (gp.position_1 in (ogr.position_1, ogr.position_2)
                 and ogr.position_1 <> gp.position_1) then r_group_wrong_pos
           when (gp.position_2 in (ogr.position_1, ogr.position_2)
@@ -371,7 +336,6 @@ begin
       where gp.user_id = v_uid;
     end if;
 
-    -- ── Points: best thirds ─────────────────────────────────────────────
     if p_scope in ('full', 'thirds') then
       select coalesce(
         count(*) filter (
@@ -384,7 +348,6 @@ begin
       where btp.user_id = v_uid;
     end if;
 
-    -- ── Points: bracket ─────────────────────────────────────────────────
     if p_scope in ('full', 'bracket') then
       select coalesce(sum(
         case bt.round
@@ -394,9 +357,7 @@ begin
           when 'sf'          then case when bp.winner_id = obr.winner_id then r_sf        else 0 end
           when 'final'       then
             case
-              -- Champion
               when bp.winner_id = obr.winner_id then r_champion
-              -- Finalist (predicted winner but ended up in final as loser)
               when bp.winner_id in (
                 select obr2.winner_id
                 from   official_bracket_results obr2
@@ -415,7 +376,6 @@ begin
       where bp.user_id = v_uid;
     end if;
 
-    -- ── Points: scorer ──────────────────────────────────────────────────
     if p_scope in ('full', 'scorer') then
       select coalesce(
         case when sp.player_normalized = ots.player_normalized
@@ -433,7 +393,6 @@ begin
       v_points_scorer := coalesce(v_points_scorer, 0);
     end if;
 
-    -- ── Update standings ────────────────────────────────────────────────
     update standings set
       points_groups  = case when p_scope in ('full','groups')  then coalesce(v_points_groups,  points_groups)  else points_groups  end,
       points_thirds  = case when p_scope in ('full','thirds')  then coalesce(v_points_thirds,  points_thirds)  else points_thirds  end,
@@ -442,14 +401,12 @@ begin
       last_recalculated_at = now()
     where user_id = v_uid;
 
-    -- Reset scope vars for next user
     v_points_groups  := null;
     v_points_thirds  := null;
     v_points_bracket := null;
     v_points_scorer  := null;
   end loop;
 
-  -- ── Snapshot ranking positions ──────────────────────────────────────────
   insert into ranking_history (
     recalculation_id, user_id, position,
     total_points, points_groups, points_thirds, points_bracket, points_scorer
@@ -465,7 +422,6 @@ begin
     s.points_scorer
   from standings s;
 
-  -- ── Audit ───────────────────────────────────────────────────────────────
   perform log_audit_event(
     'RECALCULATE_STANDINGS',
     'standings',
@@ -480,14 +436,12 @@ $$;
 
 -- ─────────────────────────────────────────────
 -- capture_all_snapshots
--- Captures immutable prediction snapshots for every user.
--- Called by admin when closing predictions.
 -- ─────────────────────────────────────────────
 create or replace function capture_all_snapshots(
   p_triggered_by uuid,
   p_snapshot_types snapshot_type[] default array['groups','best_thirds','bracket_resolved','scorer','full']::snapshot_type[]
 )
-returns int  -- number of snapshot rows created
+returns int
 language plpgsql
 security definer
 set search_path = public
@@ -502,7 +456,6 @@ declare
   v_bracket_json jsonb;
   v_resolved     record;
 begin
-  -- Verify caller is admin
   if not (select is_admin from profiles where id = p_triggered_by) then
     raise exception 'capture_all_snapshots: caller is not an admin';
   end if;
@@ -513,7 +466,6 @@ begin
 
     v_full_payload := '{}';
 
-    -- ── groups snapshot ──────────────────────────────────────────────────
     if 'groups' = any(p_snapshot_types) then
       select jsonb_object_agg(
         group_letter,
@@ -539,7 +491,6 @@ begin
       v_full_payload := v_full_payload || jsonb_build_object('groups', v_payload);
     end if;
 
-    -- ── best_thirds snapshot ─────────────────────────────────────────────
     if 'best_thirds' = any(p_snapshot_types) then
       select jsonb_agg(team_id order by team_id)
       into v_payload
@@ -557,11 +508,9 @@ begin
       v_full_payload := v_full_payload || jsonb_build_object('best_thirds', v_payload);
     end if;
 
-    -- ── bracket_resolved snapshot ────────────────────────────────────────
     if 'bracket_resolved' = any(p_snapshot_types) then
       v_bracket_json := '{}';
 
-      -- Resolved bracket (teams in each slot)
       for v_resolved in
         select * from resolve_user_bracket(v_uid)
       loop
@@ -574,7 +523,6 @@ begin
         );
       end loop;
 
-      -- Overlay predicted winners
       for v_bracket_row in
         select bp.match_number, bp.winner_id
         from   bracket_predictions bp
@@ -597,7 +545,6 @@ begin
       v_full_payload := v_full_payload || jsonb_build_object('bracket_resolved', v_bracket_json);
     end if;
 
-    -- ── scorer snapshot ──────────────────────────────────────────────────
     if 'scorer' = any(p_snapshot_types) then
       select jsonb_build_object('player_name', player_name, 'team_id', team_id)
       into v_payload
@@ -615,7 +562,6 @@ begin
       v_full_payload := v_full_payload || jsonb_build_object('scorer', v_payload);
     end if;
 
-    -- ── full composite snapshot ──────────────────────────────────────────
     if 'full' = any(p_snapshot_types) then
       insert into prediction_snapshots
         (user_id, snapshot_type, payload, triggered_by, tournament_phase_at_capture)
@@ -642,11 +588,11 @@ $$;
 
 -- ─────────────────────────────────────────────
 -- get_leaderboard
--- Returns current ranking with position and delta vs previous recalculation.
+-- Returns current ranking with rank_position and delta vs previous recalculation.
 -- ─────────────────────────────────────────────
 create or replace function get_leaderboard()
 returns table (
-  position       bigint,
+  rank_position  bigint,
   user_id        uuid,
   full_name      varchar,
   total_points   smallint,
@@ -663,7 +609,7 @@ set search_path = public
 as $$
   with ranked as (
     select
-      rank() over (order by s.total_points desc) as position,
+      rank() over (order by s.total_points desc) as rank_position,
       s.user_id,
       p.full_name,
       s.total_points,
@@ -675,7 +621,6 @@ as $$
     join profiles p on p.id = s.user_id
   ),
   prev_recalc as (
-    -- Find the second-most-recent recalculation_id
     select recalculation_id
     from   ranking_history
     group  by recalculation_id
@@ -689,7 +634,7 @@ as $$
     join   prev_recalc pr on pr.recalculation_id = rh.recalculation_id
   )
   select
-    r.position,
+    r.rank_position,
     r.user_id,
     r.full_name,
     r.total_points,
@@ -697,8 +642,8 @@ as $$
     r.points_thirds,
     r.points_bracket,
     r.points_scorer,
-    (pp.prev_position - r.position)::int as position_delta  -- positive = moved up
+    (pp.prev_position - r.rank_position)::int as position_delta
   from ranked r
   left join prev_positions pp on pp.user_id = r.user_id
-  order by r.position, r.full_name;
+  order by r.rank_position, r.full_name;
 $$;

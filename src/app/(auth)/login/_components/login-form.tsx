@@ -14,8 +14,10 @@ export default function LoginForm() {
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirectTo') ?? '/app/dashboard'
 
+  const [mode, setMode] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -26,22 +28,37 @@ export default function LoginForm() {
 
     try {
       const supabase = createClient()
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
 
-      if (authError) {
-        setError(
-          authError.message === 'Invalid login credentials'
-            ? 'Correo o contraseña incorrectos'
-            : authError.message
-        )
-        return
+      if (mode === 'login') {
+        const { error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (authError) {
+          setError(
+            authError.message === 'Invalid login credentials'
+              ? 'Correo o contraseña incorrectos'
+              : authError.message
+          )
+          return
+        }
+        router.push(redirectTo)
+        router.refresh()
+      } else {
+        const { error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: fullName },
+          },
+        })
+        if (authError) {
+          setError(authError.message)
+          return
+        }
+        router.push(redirectTo)
+        router.refresh()
       }
-
-      router.push(redirectTo)
-      router.refresh()
     } catch {
       setError('Ocurrió un error inesperado. Intenta de nuevo.')
     } finally {
@@ -65,14 +82,59 @@ export default function LoginForm() {
           </p>
         </div>
 
-        {/* Login card */}
+        {/* Tabs */}
+        <div className="flex rounded-lg border border-border p-1 gap-1">
+          <button
+            type="button"
+            onClick={() => { setMode('login'); setError(null) }}
+            className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${
+              mode === 'login'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Iniciar sesión
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode('register'); setError(null) }}
+            className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${
+              mode === 'register'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Registrarse
+          </button>
+        </div>
+
+        {/* Card */}
         <Card>
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Iniciar sesión</CardTitle>
-            <CardDescription>Acceso privado — solo participantes</CardDescription>
+            <CardTitle className="text-lg">
+              {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+            </CardTitle>
+            <CardDescription>
+              {mode === 'login' ? 'Acceso privado — solo participantes' : 'Únete a la quiniela'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {mode === 'register' && (
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Nombre completo</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Tu nombre"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="email">Correo electrónico</Label>
                 <Input
@@ -93,7 +155,7 @@ export default function LoginForm() {
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  autoComplete="current-password"
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -110,30 +172,14 @@ export default function LoginForm() {
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? (
                   <span className="flex items-center gap-2">
-                    <svg
-                      className="h-4 w-4 animate-spin"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      />
+                    <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                     </svg>
-                    Entrando...
+                    {mode === 'login' ? 'Entrando...' : 'Creando cuenta...'}
                   </span>
                 ) : (
-                  'Entrar'
+                  mode === 'login' ? 'Entrar' : 'Crear cuenta'
                 )}
               </Button>
             </form>
