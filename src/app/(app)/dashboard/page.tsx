@@ -72,7 +72,6 @@ export default async function DashboardPage() {
       topStandings={topStandings}
       profiles={profilesData}
       userPosition={userPosition}
-      userPoints={((myStandingResult.data as { total_points?: number } | null)?.total_points) ?? 0}
     />
   )
 }

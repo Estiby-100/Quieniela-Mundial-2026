@@ -3,7 +3,6 @@
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { DeltaBadge } from '@/components/atoms/delta-badge'
 import { Trophy } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'

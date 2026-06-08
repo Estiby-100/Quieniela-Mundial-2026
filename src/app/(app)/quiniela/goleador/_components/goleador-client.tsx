@@ -136,7 +136,7 @@ export function GoleadorClient({ userId, teams, initial, official, phase }: Gole
 
           <div className="flex items-start gap-2 text-xs text-muted-foreground">
             <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-            <span>La comparación ignora mayúsculas y acentos: "mbappe" = "Mbappé" = "MBAPPÉ"</span>
+            <span>La comparación ignora mayúsculas y acentos: &ldquo;mbappe&rdquo; = &ldquo;Mbappé&rdquo; = &ldquo;MBAPPÉ&rdquo;</span>
           </div>
 
           {!locked && (

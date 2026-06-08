@@ -37,7 +37,7 @@ export default async function RankingPage() {
   const profilesById = Object.fromEntries(profiles.map((p) => [p.id, p]))
 
   // Get previous ranking for delta
-  let prevRanking: Record<string, number> = {}
+  const prevRanking: Record<string, number> = {}
   const latestRecalc = (historyResult.data as { recalculation_id: string; recorded_at: string }[] | null)?.[0]
   if (latestRecalc) {
     // Find the recalculation BEFORE the latest one

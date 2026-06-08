@@ -31,7 +31,6 @@ interface DashboardContentProps {
   topStandings: StandingRow[]
   profiles: Profile[]
   userPosition: number | null
-  userPoints: number
 }
 
 function getOverallPct(groupsCompleted: number, bracketCompleted: number, goleadorDone: boolean): number {
@@ -49,7 +48,6 @@ export function DashboardContent({
   topStandings,
   profiles,
   userPosition,
-  userPoints,
 }: DashboardContentProps) {
   const overallPct = getOverallPct(groupsCompleted, bracketCompleted, goleadorDone)
   const predictionsOpen = phase === 'predictions_open'

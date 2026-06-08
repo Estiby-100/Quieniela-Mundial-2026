@@ -90,6 +90,7 @@ export function BracketClient({
       updated = invalidateDownstreamSync(m.match_number, updated, template)
     }
     return updated
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [template])
 
   function invalidateDownstreamSync(

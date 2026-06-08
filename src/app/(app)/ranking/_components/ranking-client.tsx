@@ -31,7 +31,7 @@ function getInitials(name: string | null): string {
   return name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
 }
 
-export function RankingClient({ userId, standings, phase }: RankingClientProps) {
+export function RankingClient({ userId, standings, phase: _phase }: RankingClientProps) {
   const [filter, setFilter] = useState<FilterKey>('general')
   const [expanded, setExpanded] = useState<string | null>(null)
 
