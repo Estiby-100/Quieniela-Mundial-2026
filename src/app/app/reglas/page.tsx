@@ -29,9 +29,20 @@ const REGLAS = [
   },
 ]
 
-export default function ReglasPage() {
-  const total = REGLAS.flatMap((r) => r.items).reduce((s, i) => s + i.puntos, 0)
+// Maximum possible score:
+// Groups:       12 groups × 4 positions × 5 pts = 240
+// Best thirds:  8 × 3 pts                        =  24
+// R32:          16 × 5 pts                        =  80
+// R16:           8 × 8 pts                        =  64
+// QF:            4 × 12 pts                       =  48
+// SF:            2 × 18 pts                       =  36
+// Finalist:      1 × 25 pts                       =  25
+// Champion:      1 × 40 pts                       =  40
+// Top scorer:    1 × 20 pts                       =  20
+//                                          Total = 577
+const MAX_SCORE = 577
 
+export default function ReglasPage() {
   return (
     <div className="px-4 py-6 max-w-xl space-y-6">
       <div className="flex items-center gap-2">
@@ -40,7 +51,7 @@ export default function ReglasPage() {
       </div>
       <p className="text-sm text-muted-foreground -mt-2">
         Puntos que se otorgan por cada predicción correcta. El puntaje máximo posible es{' '}
-        <span className="font-semibold text-foreground">{total} pts</span> (si aciertas todo).
+        <span className="font-semibold text-foreground">{MAX_SCORE} pts</span> (si aciertas todo).
       </p>
 
       <div className="space-y-4">
@@ -69,3 +80,4 @@ export default function ReglasPage() {
     </div>
   )
 }
+
