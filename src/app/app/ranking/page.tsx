@@ -30,10 +30,10 @@ export default async function RankingPage() {
   const profilesResult = standings.length > 0
     ? await supabase
         .from('profiles')
-        .select('id, full_name')
+        .select('id, full_name, email')
         .in('id', standings.map((s) => s.user_id))
     : { data: [] }
-  const profiles = (profilesResult.data ?? []) as Pick<Profile, 'id' | 'full_name'>[]
+  const profiles = (profilesResult.data ?? []) as Pick<Profile, 'id' | 'full_name' | 'email'>[]
   const profilesById = Object.fromEntries(profiles.map((p) => [p.id, p]))
 
   // Get previous ranking for delta
@@ -66,6 +66,7 @@ export default async function RankingPage() {
     return {
       user_id: s.user_id,
       full_name: profilesById[s.user_id]?.full_name ?? null,
+      email: profilesById[s.user_id]?.email ?? null,
       total_points: s.total_points,
       points_groups: s.points_groups,
       points_thirds: s.points_thirds,

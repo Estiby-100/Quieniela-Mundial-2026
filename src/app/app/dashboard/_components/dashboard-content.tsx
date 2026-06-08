@@ -67,17 +67,10 @@ export function DashboardContent({
       {/* Phase banner */}
       <PhaseBanner phase={phase} />
 
-      {/* Progress cards */}
-      <ProgressCards
-        groupsCompleted={groupsCompleted}
-        bracketCompleted={bracketCompleted}
-        goleadorDone={goleadorDone}
-      />
-
-      {/* CTA button */}
+      {/* CTA button — before progress cards so it's the first action users see */}
       {showCTA && (
         <Button
-          className="w-full sm:w-auto"
+          className="w-full"
           size="lg"
           onClick={() => router.push('/app/quiniela/grupos')}
         >
@@ -85,6 +78,13 @@ export function DashboardContent({
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       )}
+
+      {/* Progress cards */}
+      <ProgressCards
+        groupsCompleted={groupsCompleted}
+        bracketCompleted={bracketCompleted}
+        goleadorDone={goleadorDone}
+      />
 
       {/* Ranking preview */}
       <RankingPreview

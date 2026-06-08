@@ -13,16 +13,16 @@ interface SaveIndicatorProps {
 }
 
 export function SaveIndicator({ status, onSave, onRetry }: SaveIndicatorProps) {
-  if (status === 'idle') return null
-
   return (
     <div className="flex items-center justify-end gap-2 mt-2 min-h-[28px]">
-      {status === 'unsaved' && (
+      {(status === 'idle' || status === 'unsaved') && (
         <>
-          <span className="flex items-center gap-1 text-xs text-amber-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-400 inline-block" />
-            Sin guardar
-          </span>
+          {status === 'unsaved' && (
+            <span className="flex items-center gap-1 text-xs text-amber-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 inline-block" />
+              Sin guardar
+            </span>
+          )}
           <Button size="sm" variant="outline" className="h-7 text-xs" onClick={onSave}>
             Guardar
           </Button>

@@ -69,6 +69,7 @@ export interface AppConfig {
 
 export interface Profile {
   id: string
+  email: string | null
   full_name: string | null
   is_admin: boolean
   created_at: string

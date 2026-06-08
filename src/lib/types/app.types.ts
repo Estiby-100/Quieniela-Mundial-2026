@@ -3,6 +3,7 @@ import type { TournamentPhase } from './database.types'
 export interface StandingWithProfile {
   user_id: string
   full_name: string | null
+  email: string | null
   total_points: number
   points_groups: number
   points_thirds: number

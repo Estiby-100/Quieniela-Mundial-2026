@@ -17,7 +17,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical } from 'lucide-react'
+import { GripVertical, ChevronUp, ChevronDown } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SaveIndicator, type SaveStatus } from './save-indicator'
 import { ResultIcon } from '@/components/atoms/result-icon'
@@ -42,11 +42,19 @@ function SortableTeamRow({
   position,
   locked,
   resultStatus,
+  isFirst,
+  isLast,
+  onMoveUp,
+  onMoveDown,
 }: {
   team: Team
   position: number
   locked: boolean
   resultStatus: 'correct' | 'wrong' | 'pending' | null
+  isFirst: boolean
+  isLast: boolean
+  onMoveUp: () => void
+  onMoveDown: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: String(team.id),
@@ -64,7 +72,7 @@ function SortableTeamRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'flex items-center gap-3 py-2 px-3 rounded-md transition-colors',
+        'flex items-center gap-2 py-2 px-3 rounded-md transition-colors',
         isDragging ? 'bg-accent shadow-lg' : 'hover:bg-muted/50',
         locked ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
       )}
@@ -88,6 +96,27 @@ function SortableTeamRow({
 
       {resultStatus !== null && (
         <ResultIcon status={resultStatus} />
+      )}
+
+      {!locked && (
+        <div className="flex flex-col shrink-0">
+          <button
+            onClick={onMoveUp}
+            disabled={isFirst}
+            aria-label="Subir"
+            className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed"
+          >
+            <ChevronUp className="h-4 w-4" />
+          </button>
+          <button
+            onClick={onMoveDown}
+            disabled={isLast}
+            aria-label="Bajar"
+            className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed"
+          >
+            <ChevronDown className="h-4 w-4" />
+          </button>
+        </div>
       )}
     </div>
   )
@@ -123,6 +152,11 @@ export function GroupCard({
     onOrderChange(newOrder)
   }
 
+  function handleMove(index: number, direction: -1 | 1) {
+    const newOrder = arrayMove(currentOrder, index, index + direction)
+    onOrderChange(newOrder)
+  }
+
   function getResultStatus(team: Team, position: number): 'correct' | 'wrong' | 'pending' | null {
     if (!officialResult) return null
     const officialPos = [
@@ -132,7 +166,6 @@ export function GroupCard({
       officialResult.position_4,
     ]
     if (officialPos[position] === team.id) return 'correct'
-    // For positions 1&2: "wrong position but qualified" also gives points
     if (position <= 1 && (officialPos[0] === team.id || officialPos[1] === team.id)) return 'wrong'
     return 'wrong'
   }
@@ -161,18 +194,24 @@ export function GroupCard({
                 position={i}
                 locked={locked}
                 resultStatus={locked ? getResultStatus(team, i) : null}
+                isFirst={i === 0}
+                isLast={i === orderedTeams.length - 1}
+                onMoveUp={() => handleMove(i, -1)}
+                onMoveDown={() => handleMove(i, 1)}
               />
             ))}
           </SortableContext>
         </DndContext>
 
-        <div className="px-1">
-          <SaveIndicator
-            status={saveStatus}
-            onSave={onSave}
-            onRetry={onSave}
-          />
-        </div>
+        {!locked && (
+          <div className="px-1">
+            <SaveIndicator
+              status={saveStatus}
+              onSave={onSave}
+              onRetry={onSave}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   )

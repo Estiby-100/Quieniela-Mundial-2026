@@ -31,6 +31,12 @@ function getInitials(name: string | null): string {
   return name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
 }
 
+function displayName(s: StandingWithProfile): string {
+  if (s.full_name) return s.full_name
+  if (s.email) return s.email.split('@')[0]
+  return 'Participante'
+}
+
 export function RankingClient({ userId, standings, phase: _phase }: RankingClientProps) {
   const [filter, setFilter] = useState<FilterKey>('general')
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -105,12 +111,12 @@ export function RankingClient({ userId, standings, phase: _phase }: RankingClien
                         'text-xs font-semibold',
                         isMe ? 'bg-primary/20 text-primary' : 'bg-muted',
                       )}>
-                        {getInitials(s.full_name)}
+                        {getInitials(displayName(s))}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
                       <p className={cn('text-sm font-medium truncate', isMe && 'text-primary')}>
-                        {s.full_name ?? 'Sin nombre'}
+                        {displayName(s)}
                         {isMe && <span className="ml-1 text-xs font-normal opacity-60">(tú)</span>}
                       </p>
                       <Progress value={pct} className="h-1 mt-1 w-20" />
