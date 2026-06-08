@@ -15,11 +15,6 @@ import { createMutationClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { Team, ScorerPrediction, OfficialTopScorer, TournamentPhase } from '@/lib/types/database.types'
 
-function countryToFlag(code: string): string {
-  return code.toUpperCase().split('').map((c) =>
-    String.fromCodePoint(0x1f1e0 + c.charCodeAt(0) - 65)
-  ).join('')
-}
 
 function normalize(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim()
@@ -125,7 +120,7 @@ export function GoleadorClient({ userId, teams, initial, official, phase }: Gole
                     <SelectLabel>Grupo {g}</SelectLabel>
                     {teamsByGroup[g].map((team) => (
                       <SelectItem key={team.id} value={String(team.id)}>
-                        {countryToFlag(team.fifa_code)} {team.name}
+                        {team.name}
                       </SelectItem>
                     ))}
                   </SelectGroup>

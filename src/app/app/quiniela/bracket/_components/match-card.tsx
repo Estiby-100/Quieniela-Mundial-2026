@@ -17,11 +17,6 @@ interface MatchCardProps {
   saving?: boolean
 }
 
-function countryToFlag(code: string): string {
-  return code.toUpperCase().split('').map((c) =>
-    String.fromCodePoint(0x1f1e0 + c.charCodeAt(0) - 65)
-  ).join('')
-}
 
 const ROUND_LABELS: Record<MatchRound, string> = {
   r32: 'R32', r16: 'R16', qf: 'QF', sf: 'SF', third_place: '3er lugar', final: 'Final',
@@ -65,7 +60,6 @@ export function MatchCard({
           pending && 'opacity-50',
         )}
       >
-        <span className="text-base shrink-0">{countryToFlag(team.fifa_code)}</span>
         <span className={cn('text-sm font-medium flex-1', isSelected && !locked && 'font-semibold')}>
           {team.name}
         </span>

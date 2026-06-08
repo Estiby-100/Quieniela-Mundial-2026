@@ -72,11 +72,6 @@ function resolveSlots(
   return resolved
 }
 
-function countryToFlag(code: string): string {
-  return code.toUpperCase().split('').map((c) =>
-    String.fromCodePoint(0x1f1e0 + c.charCodeAt(0) - 65)
-  ).join('')
-}
 
 // ──────────────────────────────────────────────────────────────────────────────
 // AdminMatchCard
@@ -123,7 +118,6 @@ function AdminMatchCard({
           pending && 'opacity-40 cursor-not-allowed',
         )}
       >
-        <span className="text-lg shrink-0">{countryToFlag(team.fifa_code)}</span>
         <span className="flex-1 truncate">{team.name}</span>
         {isWinner && <Trophy className="h-3.5 w-3.5 shrink-0 text-emerald-400" />}
       </button>

@@ -18,11 +18,6 @@ interface TercerosAdminClientProps {
   groupsWithResults: number
 }
 
-function countryToFlag(code: string): string {
-  return code.toUpperCase().split('').map((c) =>
-    String.fromCodePoint(0x1f1e0 + c.charCodeAt(0) - 65)
-  ).join('')
-}
 
 export function TercerosAdminClient({
   adminId,
@@ -139,7 +134,6 @@ export function TercerosAdminClient({
                     )}
                     disabled={selected.length >= 8 && !isSelected}
                   >
-                    <span>{countryToFlag(team.fifa_code)}</span>
                     <span>{team.name}</span>
                     {isSelected && <Check className="h-3 w-3" />}
                   </button>
@@ -172,7 +166,6 @@ export function TercerosAdminClient({
                     key={teamId}
                     className="flex items-center gap-3 py-2 px-3 rounded-md bg-muted/50"
                   >
-                    <span className="text-base">{countryToFlag(team.fifa_code)}</span>
                     <span className="flex-1 text-sm font-medium">{team.name}</span>
                     <button
                       onClick={() => handleToggle(teamId)}

@@ -84,7 +84,6 @@ function SortableTeamRow({
         </button>
       )}
 
-      <span className="text-base shrink-0">{countryToFlag(team.fifa_code)}</span>
       <span className="text-sm font-medium flex-1 truncate">{team.name}</span>
 
       {resultStatus !== null && (
@@ -94,13 +93,6 @@ function SortableTeamRow({
   )
 }
 
-function countryToFlag(code: string): string {
-  return code
-    .toUpperCase()
-    .split('')
-    .map((c) => String.fromCodePoint(0x1f1e0 + c.charCodeAt(0) - 65))
-    .join('')
-}
 
 export function GroupCard({
   groupLetter,
