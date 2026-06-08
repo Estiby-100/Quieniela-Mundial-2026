@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createRawServerClient } from '@/lib/supabase/server'
 import { BracketClient } from './_components/bracket-client'
 import type {
   Team, BracketTemplate, BracketPrediction,
@@ -12,10 +12,12 @@ export default async function BracketPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
+  const rawSupabase = await createRawServerClient()
+
   const [
     templateResult, teamsResult, bracketPredsResult,
     groupPredsResult, officialGroupResult, officialBracketResult,
-    configResult,
+    configResult, resolvedBracketResult,
   ] = await Promise.all([
     supabase.from('bracket_template').select('*').order('match_number'),
     supabase.from('teams').select('*'),
@@ -24,6 +26,7 @@ export default async function BracketPage() {
     supabase.from('official_group_results').select('*'),
     supabase.from('official_bracket_results').select('*'),
     supabase.from('app_config').select('tournament_phase').eq('id', 1).single(),
+    rawSupabase.rpc('resolve_user_bracket', { p_user_id: user.id }),
   ])
 
   const template = (templateResult.data ?? []) as BracketTemplate[]
@@ -41,7 +44,7 @@ export default async function BracketPage() {
   const officialBracketMap: Record<number, number> = {}
   for (const r of officialBracket) officialBracketMap[r.match_number] = r.winner_id
 
-  // Resolve group slots from user's predictions + official fallback
+  // Group slots from user predictions + official fallback
   const groupWinners: Record<string, number> = {}
   const groupRunnerUps: Record<string, number> = {}
   for (const pred of groupPreds) {
@@ -53,6 +56,17 @@ export default async function BracketPage() {
     if (!groupRunnerUps[og.group_letter]) groupRunnerUps[og.group_letter] = og.position_2
   }
 
+  // Build serverSlots from RPC — authoritative source for best_third slot resolution.
+  // The RPC uses the user's best_third_predictions + fifa_third_place_matrix to map
+  // each best_third slot to the correct team. We only use these for best_third slots;
+  // match_winner/match_loser are still computed dynamically on the client.
+  type RpcRow = { match_number: number; slot_a_team_id: number | null; slot_b_team_id: number | null }
+  const rpcRows = (resolvedBracketResult.data ?? []) as RpcRow[]
+  const serverSlots: Record<number, { a: number | null; b: number | null }> = {}
+  for (const row of rpcRows) {
+    serverSlots[row.match_number] = { a: row.slot_a_team_id, b: row.slot_b_team_id }
+  }
+
   return (
     <BracketClient
       userId={user.id}
@@ -62,6 +76,7 @@ export default async function BracketPage() {
       groupWinners={groupWinners}
       groupRunnerUps={groupRunnerUps}
       officialBracketMap={officialBracketMap}
+      serverSlots={serverSlots}
       phase={phase}
     />
   )
